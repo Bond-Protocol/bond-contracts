@@ -1,0 +1,5 @@
+[profile.default]
+verbosity = 0
+optimizer = true     # enable or disable the solc optimizer
+optimizer_runs = 100000 # the number of optimizer runs
+solc_version = '0.8.15'
