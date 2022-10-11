@@ -405,9 +405,6 @@ abstract contract BondBaseSDA is IBondSDA, Auth {
             // Capacity is decreased by the deposited or paid amount
             market.capacity -= market.capacityInQuote ? amount_ : payout;
 
-            // Incrementing total debt raises the price of the next bond
-            market.totalDebt += payout + 1; // add 1 to satisfy price inequality
-
             // Markets keep track of how many quote tokens have been
             // purchased, and how many payout tokens have been sold
             market.purchased += amount_;
@@ -459,8 +456,10 @@ abstract contract BondBaseSDA is IBondSDA, Auth {
         // |                with deposits
         // |
         // |------------------------------------| t
-        if (uint256(metadata[id_].lastDecay) <= block.timestamp)
-            markets[id_].totalDebt -= _debtDecay(id_);
+
+        // Decay debt by the amount of time since the last decay
+        uint256 decayedDebt = currentDebt(id_);
+        markets[id_].totalDebt = decayedDebt;
 
         // Control variable decay
 
@@ -494,15 +493,32 @@ abstract contract BondBaseSDA is IBondSDA, Auth {
         // price = quote tokens : payout token (i.e. 200 QUOTE : BASE), adjusted for scaling
         payout_ = amount_.mulDiv(market.scale, marketPrice_);
 
-        // Set last decay timestamp based on size of purchase to linearize decay
-        // 1e9 is used a scaling constant since the decay interval is unlikely to exceed 1e9 seconds (> 30 years)
-        // It is also low enough to avoid overflows from high debt values
-        uint256 debtPerSecond = metadata[id_].lastTuneDebt.mulDiv(
-            1e9,
-            uint256(metadata[id_].debtDecayInterval)
-        );
+        // Cache storage variables to memory
+        uint256 debtDecayInterval = uint256(metadata[id_].debtDecayInterval);
+        uint256 lastTuneDebt = metadata[id_].lastTuneDebt;
+        uint256 lastDecay = uint256(metadata[id_].lastDecay);
 
-        metadata[id_].lastDecay += uint48(payout_.mulDivUp(1e9, debtPerSecond));
+        // Set last decay timestamp based on size of purchase to linearize decay
+        uint256 lastDecayIncrement = debtDecayInterval.mulDiv(payout_, lastTuneDebt);
+        metadata[id_].lastDecay += uint48(lastDecayIncrement);
+
+        // Update total debt following the purchase
+        // Goal is to have the same decayed debt post-purchase as pre-purchase so that price is the same as before purchase and then add new debt to increase price
+        // 1. Adjust total debt so that decayed debt is equal to the current debt after updating the last decay timestamp.
+        //    This is the currentDebt function solved for totalDebt and adding lastDecayIncrement (the number of seconds lastDecay moves forward in time)
+        //    to the number of seconds used to calculate the previous currentDebt.
+        // 2. Add the payout to the total debt to increase the price.
+        uint256 decayOffset = time_ > lastDecay
+            ? (
+                debtDecayInterval > (time_ - lastDecay)
+                    ? debtDecayInterval - (time_ - lastDecay)
+                    : 0
+            )
+            : debtDecayInterval + (lastDecay - time_);
+        markets[id_].totalDebt =
+            decayedDebt.mulDiv(debtDecayInterval, decayOffset + lastDecayIncrement) +
+            payout_ +
+            1; // add 1 to satisfy price inequality
     }
 
     /// @notice             Auto-adjust control variable to hit capacity/spend target
@@ -605,23 +621,6 @@ abstract contract BondBaseSDA is IBondSDA, Auth {
     function _currentMarketPrice(uint256 id_) internal view returns (uint256) {
         BondMarket memory market = markets[id_];
         return terms[id_].controlVariable.mulDiv(market.totalDebt, market.scale);
-    }
-
-    /// @notice             Amount of debt to decay from total debt for market ID
-    /// @param id_          ID of market
-    /// @return             Amount of debt to decay
-    function _debtDecay(uint256 id_) internal view returns (uint256) {
-        BondMetadata memory meta = metadata[id_];
-        uint256 lastDecay = uint256(meta.lastDecay);
-        uint256 currentTime = block.timestamp;
-        uint256 secondsSince;
-        unchecked {
-            secondsSince = currentTime > lastDecay ? currentTime - lastDecay : 0;
-        }
-        return
-            secondsSince > meta.debtDecayInterval
-                ? markets[id_].totalDebt
-                : markets[id_].totalDebt.mulDiv(secondsSince, uint256(meta.debtDecayInterval));
     }
 
     /// @notice                 Amount to decay control variable by
@@ -729,7 +728,36 @@ abstract contract BondBaseSDA is IBondSDA, Auth {
 
     /// @inheritdoc IBondSDA
     function currentDebt(uint256 id_) public view override returns (uint256) {
-        return markets[id_].totalDebt - _debtDecay(id_);
+        BondMetadata memory meta = metadata[id_];
+        uint256 lastDecay = uint256(meta.lastDecay);
+        uint256 currentTime = block.timestamp;
+
+        // Determine if decay should increase or decrease debt based on last decay time
+        // If last decay time is in the future, then debt should be increased
+        // If last decay time is in the past, then debt should be decreased
+        if (lastDecay > currentTime) {
+            uint256 secondsUntil;
+            unchecked {
+                secondsUntil = lastDecay - currentTime;
+            }
+            return
+                markets[id_].totalDebt.mulDiv(
+                    uint256(meta.debtDecayInterval) + secondsUntil,
+                    uint256(meta.debtDecayInterval)
+                );
+        } else {
+            uint256 secondsSince;
+            unchecked {
+                secondsSince = currentTime - lastDecay;
+            }
+            return
+                secondsSince > meta.debtDecayInterval
+                    ? 0
+                    : markets[id_].totalDebt.mulDiv(
+                        uint256(meta.debtDecayInterval) - secondsSince,
+                        uint256(meta.debtDecayInterval)
+                    );
+        }
     }
 
     /// @inheritdoc IBondSDA
