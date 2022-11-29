@@ -10,16 +10,16 @@ forge build
 ## Deployments
 Bond Protocol is deployed to Ethereum Mainnet and Goerli Testnet at the following addresses:
 
-Roles Authority: [0x007A0F3B057945db86408197DAa7C04373B5a94A](https://etherscan.io/address/0x007a0f3b057945db86408197daa7c04373b5a94a)
+Roles Authority: [0x007A0F48A4e3d74Ab4234adf9eA9EB32f87b4b14](https://etherscan.io/address/0x007A0F48A4e3d74Ab4234adf9eA9EB32f87b4b14)
 
-Aggregator: [0x007A66B9e719b3aBb2f3917Eb47D4231a17F5a0D](https://etherscan.io/address/0x007A66B9e719b3aBb2f3917Eb47D4231a17F5a0D)
+Aggregator: [0x007A66A2a13415DB3613C1a4dd1C942A285902d1](https://etherscan.io/address/0x007A66A2a13415DB3613C1a4dd1C942A285902d1)
 
-Fixed-Expiration Teller: [0x007FE7c498A2Cf30971ad8f2cbC36bd14Ac51156](https://etherscan.io/address/0x007FE7c498A2Cf30971ad8f2cbC36bd14Ac51156)
+Fixed-Expiration Teller: [0x007FE70dc9797C4198528aE43d8195ffF82Bdc95](https://etherscan.io/address/0x007FE70dc9797C4198528aE43d8195ffF82Bdc95)
 
-Fixed-Expiration Auctioneer: [0x007FEA2a31644F20b0fE18f69643890b6F878AA6](https://etherscan.io/address/0x007FEA2a31644F20b0fE18f69643890b6F878AA6)
+Fixed-Expiration Auctioneer: [0x007FEA32545a39Ff558a1367BBbC1A22bc7ABEfD](https://etherscan.io/address/0x007FEA32545a39Ff558a1367BBbC1A22bc7ABEfD)
 
-ERC20 Bond Token Reference (clones proxy to it): [0x545642A65783B445D0F97A8cA01130bA8Bfc3F45](https://etherscan.io/address/0x545642a65783b445d0f97a8ca01130ba8bfc3f45)
+ERC20 Bond Token Reference (clones proxy to it): [0xD525c81912E242D0E86BC6A05e97A7c9AD747c48](https://etherscan.io/address/0xD525c81912E242D0E86BC6A05e97A7c9AD747c48)
 
-Fixed-Term Teller: [0x007F77B53ed0F058616335bc040cD326E125daE0](https://etherscan.io/address/0x007f77b53ed0f058616335bc040cd326e125dae0)
+Fixed-Term Teller: [0x007F7735baF391e207E3aA380bb53c4Bd9a5Fed6](https://etherscan.io/address/0x007F7735baF391e207E3aA380bb53c4Bd9a5Fed6)
 
-Fixed-Term Auctioneer: [0x007F7A6012A5e03f6F388dd9F19Fd1D754Cfc128](https://etherscan.io/address/0x007F7A6012A5e03f6F388dd9F19Fd1D754Cfc128)
+Fixed-Term Auctioneer: [0x007F7A1cb838A872515c8ebd16bE4b14Ef43a222](https://etherscan.io/address/0x007F7A1cb838A872515c8ebd16bE4b14Ef43a222)
