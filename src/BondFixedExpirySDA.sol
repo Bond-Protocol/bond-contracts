@@ -31,12 +31,26 @@ contract BondFixedExpirySDA is BondBaseSDA {
 
     /// @inheritdoc BondBaseSDA
     function createMarket(bytes calldata params_) external override returns (uint256) {
+        // Decode params into the struct type expected by this auctioneer
         MarketParams memory params = abi.decode(params_, (MarketParams));
+
+        // Vesting is rounded to the nearest day at 0000 UTC (in seconds) since bond tokens
+        // are only unique to a day, not a specific timestamp.
+        params.vesting = (params.vesting / 1 days) * 1 days;
+
+        // Check that the vesting parameter is valid for a fixed-expiry market
+        if (params.vesting != 0 && params.vesting < params.conclusion)
+            revert Auctioneer_InvalidParams();
+
+        // Create market with provided params
         uint256 marketId = _createMarket(params);
 
-        // Create bond token (ERC20 for fixed expiry)
-        IBondFixedExpiryTeller(address(_teller)).deploy(params.payoutToken, params.vesting);
+        // Create bond token (ERC20 for fixed expiry) if not instant swap
+        if (params.vesting != 0) {
+            IBondFixedExpiryTeller(address(_teller)).deploy(params.payoutToken, params.vesting);
+        }
 
+        // Return market ID
         return marketId;
     }
 }

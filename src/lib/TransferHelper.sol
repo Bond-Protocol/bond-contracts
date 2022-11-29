@@ -17,7 +17,12 @@ library TransferHelper {
             abi.encodeWithSelector(ERC20.transferFrom.selector, from, to, amount)
         );
 
-        require(success && (data.length == 0 || abi.decode(data, (bool))), "TRANSFER_FROM_FAILED");
+        require(
+            success &&
+                (data.length == 0 || abi.decode(data, (bool))) &&
+                address(token).code.length > 0,
+            "TRANSFER_FROM_FAILED"
+        );
     }
 
     function safeTransfer(
@@ -29,7 +34,12 @@ library TransferHelper {
             abi.encodeWithSelector(ERC20.transfer.selector, to, amount)
         );
 
-        require(success && (data.length == 0 || abi.decode(data, (bool))), "TRANSFER_FAILED");
+        require(
+            success &&
+                (data.length == 0 || abi.decode(data, (bool))) &&
+                address(token).code.length > 0,
+            "TRANSFER_FAILED"
+        );
     }
 
     // function safeApprove(

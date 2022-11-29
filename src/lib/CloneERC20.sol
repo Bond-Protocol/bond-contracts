@@ -54,6 +54,22 @@ abstract contract CloneERC20 is Clone {
         return true;
     }
 
+    function increaseAllowance(address spender, uint256 amount) public virtual returns (bool) {
+        allowance[msg.sender][spender] += amount;
+
+        emit Approval(msg.sender, spender, allowance[msg.sender][spender]);
+
+        return true;
+    }
+
+    function decreaseAllowance(address spender, uint256 amount) public virtual returns (bool) {
+        allowance[msg.sender][spender] -= amount;
+
+        emit Approval(msg.sender, spender, allowance[msg.sender][spender]);
+
+        return true;
+    }
+
     function transfer(address to, uint256 amount) public virtual returns (bool) {
         balanceOf[msg.sender] -= amount;
 

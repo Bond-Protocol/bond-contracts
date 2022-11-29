@@ -41,7 +41,7 @@ contract ERC20BondToken is CloneERC20 {
     }
 
     /// @notice Address of the Teller that created the token
-    function teller() internal pure returns (address _teller) {
+    function teller() public pure returns (address _teller) {
         return _getArgAddress(0x75);
     }
 

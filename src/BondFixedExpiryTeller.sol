@@ -23,7 +23,8 @@ import {FullMath} from "./lib/FullMath.sol";
 /// @dev The Bond Fixed Expiry Teller is an implementation of the
 ///      Bond Base Teller contract specific to handling user bond transactions
 ///      and tokenizing bond markets where all purchases vest at the same timestamp
-///      as ERC20 tokens.
+///      as ERC20 tokens. Vesting timestamps are rounded to the nearest day to avoid
+///      duplicate tokens with the same name/symbol.
 ///
 /// @author Oighty, Zeus, Potted Meat, indigo
 contract BondFixedExpiryTeller is BondBaseTeller, IBondFixedExpiryTeller {
@@ -98,17 +99,24 @@ contract BondFixedExpiryTeller is BondBaseTeller, IBondFixedExpiryTeller {
         uint48 expiry_,
         uint256 amount_
     ) external override nonReentrant returns (ERC20BondToken, uint256) {
-        ERC20BondToken bondToken = bondTokens[underlying_][expiry_];
+        // Expiry is rounded to the nearest day at 0000 UTC (in seconds) since bond tokens
+        // are only unique to a day, not a specific timestamp.
+        uint48 expiry = uint48(expiry_ / 1 days) * 1 days;
+
+        // Revert if expiry is in the past
+        if (uint256(expiry) < block.timestamp) revert Teller_InvalidParams();
+
+        ERC20BondToken bondToken = bondTokens[underlying_][expiry];
 
         // Revert if no token exists, must call deploy first
         if (bondToken == ERC20BondToken(address(0x00)))
-            revert Teller_TokenDoesNotExist(underlying_, expiry_);
+            revert Teller_TokenDoesNotExist(underlying_, expiry);
 
         // Transfer in underlying
         // Check that amount received is not less than amount expected
         // Handles edge cases like fee-on-transfer tokens (which are not supported)
         uint256 oldBalance = underlying_.balanceOf(address(this));
-        underlying_.transferFrom(msg.sender, address(this), amount_);
+        underlying_.safeTransferFrom(msg.sender, address(this), amount_);
         if (underlying_.balanceOf(address(this)) < oldBalance + amount_)
             revert Teller_UnsupportedToken();
 
@@ -135,10 +143,18 @@ contract BondFixedExpiryTeller is BondBaseTeller, IBondFixedExpiryTeller {
 
     /// @inheritdoc IBondFixedExpiryTeller
     function redeem(ERC20BondToken token_, uint256 amount_) external override nonReentrant {
-        if (uint48(block.timestamp) < token_.expiry())
-            revert Teller_TokenNotMatured(token_.expiry());
+        // Validate token is issued by this teller
+        ERC20 underlying = token_.underlying();
+        uint48 expiry = token_.expiry();
+
+        if (token_ != bondTokens[underlying][expiry]) revert Teller_UnsupportedToken();
+
+        // Validate token expiry has passed
+        if (uint48(block.timestamp) < expiry) revert Teller_TokenNotMatured(expiry);
+
+        // Burn bond token and transfer underlying
         token_.burn(msg.sender, amount_);
-        token_.underlying().transfer(msg.sender, amount_);
+        underlying.safeTransfer(msg.sender, amount_);
     }
 
     /* ========== TOKENIZATION ========== */
@@ -150,31 +166,61 @@ contract BondFixedExpiryTeller is BondBaseTeller, IBondFixedExpiryTeller {
         nonReentrant
         returns (ERC20BondToken)
     {
+        // Expiry is rounded to the nearest day at 0000 UTC (in seconds) since bond tokens
+        // are only unique to a day, not a specific timestamp.
+        uint48 expiry = uint48(expiry_ / 1 days) * 1 days;
+
+        // Revert if expiry is in the past
+        if (uint256(expiry) < block.timestamp) revert Teller_InvalidParams();
+
         // Create bond token if one doesn't already exist
-        ERC20BondToken bondToken = bondTokens[underlying_][expiry_];
+        ERC20BondToken bondToken = bondTokens[underlying_][expiry];
         if (bondToken == ERC20BondToken(address(0))) {
-            (string memory name, string memory symbol) = _getNameAndSymbol(underlying_, expiry_);
+            (string memory name, string memory symbol) = _getNameAndSymbol(underlying_, expiry);
             bytes memory tokenData = abi.encodePacked(
                 bytes32(bytes(name)),
                 bytes32(bytes(symbol)),
-                underlying_.decimals(),
+                uint8(underlying_.decimals()),
                 underlying_,
-                uint256(expiry_),
+                uint256(expiry),
                 address(this)
             );
             bondToken = ERC20BondToken(address(bondTokenImplementation).clone(tokenData));
-            bondTokens[underlying_][expiry_] = bondToken;
-            emit ERC20BondTokenCreated(bondToken, underlying_, expiry_);
+            bondTokens[underlying_][expiry] = bondToken;
+            emit ERC20BondTokenCreated(bondToken, underlying_, expiry);
         }
         return bondToken;
     }
 
     /// @inheritdoc IBondFixedExpiryTeller
     function getBondTokenForMarket(uint256 id_) external view override returns (ERC20BondToken) {
-        (, , ERC20 underlying, , uint48 vesting, ) = _aggregator
+        // Check that the id is for a market served by this teller
+        if (address(_aggregator.getTeller(id_)) != address(this)) revert Teller_InvalidParams();
+
+        // Get the underlying and expiry for the market
+        (, , ERC20 underlying, , uint48 expiry, ) = _aggregator
             .getAuctioneer(id_)
             .getMarketInfoForPurchase(id_);
 
-        return bondTokens[underlying][vesting];
+        return bondTokens[underlying][expiry];
+    }
+
+    /// @inheritdoc IBondFixedExpiryTeller
+    function getBondToken(ERC20 underlying_, uint48 expiry_)
+        external
+        view
+        override
+        returns (ERC20BondToken)
+    {
+        // Expiry is rounded to the nearest day at 0000 UTC (in seconds) since bond tokens
+        // are only unique to a day, not a specific timestamp.
+        uint48 expiry = uint48(expiry_ / 1 days) * 1 days;
+
+        ERC20BondToken bondToken = bondTokens[underlying_][expiry];
+
+        // Revert if token does not exist
+        if (address(bondToken) == address(0)) revert Teller_TokenDoesNotExist(underlying_, expiry);
+
+        return bondToken;
     }
 }

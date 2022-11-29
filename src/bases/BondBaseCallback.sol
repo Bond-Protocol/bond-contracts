@@ -38,6 +38,7 @@ abstract contract BondBaseCallback is IBondCallback, Ownable, ReentrancyGuard {
 
     error Callback_MarketNotSupported(uint256 id);
     error Callback_TokensNotReceived();
+    error Callback_TellerMismatch();
 
     /* ========== STATE VARIABLES ========== */
 
@@ -56,7 +57,31 @@ abstract contract BondBaseCallback is IBondCallback, Ownable, ReentrancyGuard {
 
     /// @inheritdoc IBondCallback
     function whitelist(address teller_, uint256 id_) external override onlyOwner {
+        // Check that the market id is a valid, live market on the aggregator
+        try _aggregator.isLive(id_) returns (bool live) {
+            if (!live) revert Callback_MarketNotSupported(id_);
+        } catch {
+            revert Callback_MarketNotSupported(id_);
+        }
+
+        // Check that the provided teller is the teller for the market ID on the stored aggregator
+        // We could pull the teller from the aggregator, but requiring the teller to be passed in
+        // is more explicit about which contract is being whitelisted
+        if (teller_ != address(_aggregator.getTeller(id_))) revert Callback_TellerMismatch();
+
         approvedMarkets[teller_][id_] = true;
+    }
+
+    /// @notice Remove a market ID on a teller from the whitelist
+    /// @dev    Shutdown function in case there's an issue with the teller
+    /// @param  teller_ Address of the Teller contract which serves the market
+    /// @param  id_     ID of the market to remove from whitelist
+    function blacklist(address teller_, uint256 id_) external onlyOwner {
+        // Check that the teller matches the aggregator provided teller for the market ID
+        if (teller_ != address(_aggregator.getTeller(id_))) revert Callback_TellerMismatch();
+
+        // Remove market from whitelist
+        approvedMarkets[teller_][id_] = false;
     }
 
     /* ========== CALLBACK ========== */
