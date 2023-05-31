@@ -25,8 +25,9 @@ interface IBondSDA is IBondAuctioneer {
     struct BondTerms {
         uint256 controlVariable; // scaling variable for price
         uint256 maxDebt; // max payout token debt accrued
-        uint48 vesting; // length of time from deposit to expiry if fixed-term, vesting timestamp if fixed-expiry
+        uint48 start; // timestamp when market starts
         uint48 conclusion; // timestamp when market no longer offered
+        uint48 vesting; // length of time from deposit to expiry if fixed-term, vesting timestamp if fixed-expiry
     }
 
     /// @notice Data needed for tuning bond market
@@ -34,7 +35,6 @@ interface IBondSDA is IBondAuctioneer {
     struct BondMetadata {
         uint48 lastTune; // last timestamp when control variable was tuned
         uint48 lastDecay; // last timestamp when market was created and debt was decayed
-        uint32 length; // time from creation to conclusion.
         uint32 depositInterval; // target frequency of deposits
         uint32 tuneInterval; // frequency of tuning
         uint32 tuneAdjustmentDelay; // time to implement downward tuning adjustments
@@ -84,9 +84,12 @@ interface IBondSDA is IBondAuctioneer {
     /// @dev                       where decayInterval = max(3 days, 5 * depositInterval) and marketDuration = conclusion - creation time.
     /// @dev                    8. Is fixed term ? Vesting length (seconds) : Vesting expiry (timestamp).
     /// @dev                        A 'vesting' param longer than 50 years is considered a timestamp for fixed expiry.
-    /// @dev                    9. Conclusion (timestamp)
-    /// @dev                    10. Deposit interval (seconds)
-    /// @dev                    11. Market scaling factor adjustment, ranges from -24 to +24 within the configured market bounds.
+    /// @dev                    9. Start Time of the Market (timestamp) - Allows starting a market in the future.
+    /// @dev                        If a start time is provided, the txn must be sent prior to the start time (functions as a deadline).
+    /// @dev                        If start time is not provided (i.e. 0), the market will start immediately.
+    /// @dev                    10. Market Duration (seconds) - Duration of the market in seconds.
+    /// @dev                    11. Deposit interval (seconds)
+    /// @dev                    12. Market scaling factor adjustment, ranges from -24 to +24 within the configured market bounds.
     /// @dev                        Should be calculated as: (payoutDecimals - quoteDecimals) - ((payoutPriceDecimals - quotePriceDecimals) / 2)
     /// @dev                        Providing a scaling factor adjustment that doesn't follow this formula could lead to under or overflow errors in the market.
     /// @return                 ID of new bond market
@@ -100,7 +103,8 @@ interface IBondSDA is IBondAuctioneer {
         uint256 formattedMinimumPrice;
         uint32 debtBuffer;
         uint48 vesting;
-        uint48 conclusion;
+        uint48 start;
+        uint32 duration;
         uint32 depositInterval;
         int8 scaleAdjustment;
     }
@@ -142,4 +146,10 @@ interface IBondSDA is IBondAuctioneer {
     /// @param id_          ID of market
     /// @return             Control variable for market in payout token decimals
     function currentControlVariable(uint256 id_) external view returns (uint256);
+
+    /// @notice             Calculate max payout of the market in payout tokens
+    /// @dev                Returns a dynamically calculated payout or the maximum set by the creator, whichever is less.
+    /// @param id_          ID of market
+    /// @return             Current max payout for the market in payout tokens
+    function maxPayout(uint256 id_) external view returns (uint256);
 }
