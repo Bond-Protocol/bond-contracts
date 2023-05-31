@@ -3,3 +3,9 @@ verbosity = 0
 optimizer = true     # enable or disable the solc optimizer
 optimizer_runs = 100000 # the number of optimizer runs
 solc_version = '0.8.15'
+remappings = [
+    'ds-test/=lib/ds-test/src/',
+    'solmate/=lib/solmate/src/',
+    'clones/=lib/clones-with-immutable-args/src/',
+    'forge-std/=lib/forge-std/src/',
+]
