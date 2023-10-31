@@ -206,9 +206,10 @@ abstract contract BondBaseSDA is IBondSDA, Auth {
                 uint256(params_.duration)
             );
 
+            uint48 start = params_.start == 0 ? uint48(block.timestamp) : params_.start;
             metadata[marketId] = BondMetadata({
-                lastTune: uint48(block.timestamp),
-                lastDecay: uint48(block.timestamp),
+                lastTune: start,
+                lastDecay: start,
                 depositInterval: params_.depositInterval,
                 tuneInterval: params_.depositInterval > defaultTuneInterval
                     ? params_.depositInterval
@@ -793,9 +794,13 @@ abstract contract BondBaseSDA is IBondSDA, Auth {
 
     /// @inheritdoc IBondSDA
     function currentDebt(uint256 id_) public view override returns (uint256) {
+        uint256 currentTime = block.timestamp;
+
+        // Don't decay debt prior to start time
+        if (currentTime < uint256(terms[id_].start)) return markets[id_].totalDebt;
+
         BondMetadata memory meta = metadata[id_];
         uint256 lastDecay = uint256(meta.lastDecay);
-        uint256 currentTime = block.timestamp;
 
         // Determine if decay should increase or decrease debt based on last decay time
         // If last decay time is in the future, then debt should be increased
