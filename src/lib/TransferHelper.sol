@@ -42,17 +42,17 @@ library TransferHelper {
         );
     }
 
-    // function safeApprove(
-    //     ERC20 token,
-    //     address to,
-    //     uint256 amount
-    // ) internal {
-    //     (bool success, bytes memory data) = address(token).call(
-    //         abi.encodeWithSelector(ERC20.approve.selector, to, amount)
-    //     );
+    function safeApprove(
+        ERC20 token,
+        address to,
+        uint256 amount
+    ) internal {
+        (bool success, bytes memory data) = address(token).call(
+            abi.encodeWithSelector(ERC20.approve.selector, to, amount)
+        );
 
-    //     require(success && (data.length == 0 || abi.decode(data, (bool))), "APPROVE_FAILED");
-    // }
+        require(success && (data.length == 0 || abi.decode(data, (bool))), "APPROVE_FAILED");
+    }
 
     // function safeTransferETH(address to, uint256 amount) internal {
     //     (bool success, ) = to.call{value: amount}(new bytes(0));
