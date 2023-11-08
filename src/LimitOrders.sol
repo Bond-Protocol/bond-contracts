@@ -1,13 +1,13 @@
 /// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.15;
 
-import {ERC20} from "solmate/tokens/ERC20.sol";
-import {Auth, Authority} from "solmate/auth/Auth.sol";
-import {TransferHelper} from "src/lib/TransferHelper.sol";
-import {FullMath} from "src/lib/FullMath.sol";
-import {IBondAggregator} from "src/interfaces/IBondAggregator.sol";
-import {IBondAuctioneer} from "src/interfaces/IBondAuctioneer.sol";
-import {IBondTeller} from "src/interfaces/IBondTeller.sol";
+import {ERC20} from "solmate/src/tokens/ERC20.sol";
+import {Auth, Authority} from "solmate/src/auth/Auth.sol";
+import {TransferHelper} from "./lib/TransferHelper.sol";
+import {FullMath} from "./lib/FullMath.sol";
+import {IBondAggregator} from "./interfaces/IBondAggregator.sol";
+import {IBondAuctioneer} from "./interfaces/IBondAuctioneer.sol";
+import {IBondTeller} from "./interfaces/IBondTeller.sol";
 
 contract LimitOrders is Auth {
     using TransferHelper for ERC20;

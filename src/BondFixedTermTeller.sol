@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.8.15;
 
-import {ERC20} from "solmate/tokens/ERC20.sol";
+import {ERC20} from "solmate/src/tokens/ERC20.sol";
 
 import {BondBaseTeller, IBondAggregator, Authority} from "./bases/BondBaseTeller.sol";
 import {IBondFixedTermTeller} from "./interfaces/IBondFixedTermTeller.sol";

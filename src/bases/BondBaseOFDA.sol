@@ -1,8 +1,8 @@
 /// SPDX-License-Identifier: AGPL-3.0
 pragma solidity 0.8.15;
 
-import {ERC20} from "solmate/tokens/ERC20.sol";
-import {Auth, Authority} from "solmate/auth/Auth.sol";
+import {ERC20} from "solmate/src/tokens/ERC20.sol";
+import {Auth, Authority} from "solmate/src/auth/Auth.sol";
 
 import {IBondOFDA, IBondAuctioneer} from "../interfaces/IBondOFDA.sol";
 import {IBondTeller} from "../interfaces/IBondTeller.sol";

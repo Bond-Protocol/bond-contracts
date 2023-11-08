@@ -2,7 +2,7 @@
 pragma solidity >=0.8.0;
 
 import {ERC20BondToken} from "../ERC20BondToken.sol";
-import {ERC20} from "solmate/tokens/ERC20.sol";
+import {ERC20} from "solmate/src/tokens/ERC20.sol";
 
 interface IBondFixedExpiryTeller {
     /// @notice          Redeem a fixed-expiry bond token for the underlying token (bond token must have matured)
