@@ -12,7 +12,7 @@ disqus: yAcademy
 
 **Residents:**
 
--   Engin33r
+- Engin33r
 
 ## Table of Contents
 
@@ -57,12 +57,12 @@ yAcademy and the residents make no warranties regarding the security of the code
 
 Findings are broken down into sections by their respective impact:
 
--   Critical, High, Medium, Low impact
-    -   These are findings that range from attacks that may cause loss of funds, impact control/ownership of the contracts, or cause any unintended consequences/actions that are outside the scope of the requirements
--   Gas savings
-    -   Findings that can improve the gas efficiency of the contracts
--   Informational
-    -   Findings including recommendations and best practices
+- Critical, High, Medium, Low impact
+  - These are findings that range from attacks that may cause loss of funds, impact control/ownership of the contracts, or cause any unintended consequences/actions that are outside the scope of the requirements
+- Gas savings
+  - Findings that can improve the gas efficiency of the contracts
+- Informational
+  - Findings including recommendations and best practices
 
 ---
 
@@ -421,8 +421,8 @@ Using `> 0` is more gas efficient than using `!= 0` when comparing a uint to zer
 
 Two instances of this were found:
 
--   https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/lib/FullMath.sol#L35
--   https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/lib/FullMath.sol#L122
+- https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/lib/FullMath.sol#L35
+- https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/lib/FullMath.sol#L122
 
 #### Impact
 
@@ -440,14 +440,14 @@ Initializing an int or uint to zero is unnecessary, because solidity defaults in
 
 Several instances of this were found:
 
--   https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/lib/ERC1155.sol#L90
--   https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/lib/ERC1155.sol#L135
--   https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/lib/ERC1155.sol#L190
--   https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/lib/ERC1155.sol#L225
--   https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/BondFixedTermTeller.sol#L139
--   https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/BondAggregator.sol#L153
--   https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/BondAggregator.sol#L160
--   https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/BondAggregator.sol#L177
+- https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/lib/ERC1155.sol#L90
+- https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/lib/ERC1155.sol#L135
+- https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/lib/ERC1155.sol#L190
+- https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/lib/ERC1155.sol#L225
+- https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/BondFixedTermTeller.sol#L139
+- https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/BondAggregator.sol#L153
+- https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/BondAggregator.sol#L160
+- https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/BondAggregator.sol#L177
 
 #### Impact
 
@@ -467,11 +467,11 @@ The gas savings comes from the removal of a temporary variable. j++ is equal to 
 
 There are several instances of this finding:
 
--   https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/BondAggregator.sol#L177
--   https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/BondAggregator.sol#L180
--   https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/BondAggregator.sol#L186
--   https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/BondAggregator.sol#L191
--   https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/OlympusTreasuryCallback.sol#L74
+- https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/BondAggregator.sol#L177
+- https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/BondAggregator.sol#L180
+- https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/BondAggregator.sol#L186
+- https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/BondAggregator.sol#L191
+- https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/OlympusTreasuryCallback.sol#L74
 
 #### Impact
 
@@ -489,13 +489,13 @@ The array length is read on each iteration of a for loop. Caching this value bef
 
 Multiple for loops can receive this gas optimization:
 
--   https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/BondAggregator.sol#L153
--   https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/BondAggregator.sol#L160
--   https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/BondAggregator.sol#L177
--   https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/BondAggregator.sol#L186
--   https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/BondFixedTermTeller.sol#L139
--   https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/OlympusTreasuryCallback.sol#L74
--   https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/bases/BondBaseTeller.sol#L103
+- https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/BondAggregator.sol#L153
+- https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/BondAggregator.sol#L160
+- https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/BondAggregator.sol#L177
+- https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/BondAggregator.sol#L186
+- https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/BondFixedTermTeller.sol#L139
+- https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/OlympusTreasuryCallback.sol#L74
+- https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/bases/BondBaseTeller.sol#L103
 
 #### Impact
 
@@ -869,9 +869,9 @@ The variable named "nonce" in the `liveMarketsBetween()` function of BondAggrega
 
 Three functions in BondAggregator.sol have a nonce variable
 
--   https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/BondAggregator.sol#L130-L134
--   https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/BondAggregator.sol#L158-L163
--   https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/BondAggregator.sol#L184-L191
+- https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/BondAggregator.sol#L130-L134
+- https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/BondAggregator.sol#L158-L163
+- https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/BondAggregator.sol#L184-L191
 
 #### Impact
 
@@ -889,7 +889,7 @@ The comment in TransferHelper.sol "Taken from Solmate" is confusing because this
 
 The comment
 
--   https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/lib/TransferHelper.sol#L8
+- https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/lib/TransferHelper.sol#L8
 
 #### Impact
 
@@ -907,7 +907,7 @@ The comment in CloneERC20.sol "Modern and gas efficient ERC20 + EIP-2612 impleme
 
 The comment
 
--   https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/lib/CloneERC20.sol#L6
+- https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/lib/CloneERC20.sol#L6
 
 #### Impact
 
@@ -925,7 +925,7 @@ The comment in BondBaseTeller.sol "extend this base since it is called by purcha
 
 The comment
 
--   https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/bases/BondBaseTeller.sol#L212
+- https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/bases/BondBaseTeller.sol#L212
 
 #### Impact
 
@@ -939,9 +939,9 @@ Change `purchaseBond` to `purchase`.
 
 Some variable name choices could lead to confusion by future developers. Examples include:
 
--   lastDecay in BondBaseCDA may not equal the block.timestamp, but can be greater than or less the block.timestamp when it gets updated. lastDecay is changed proportionally with the amount of the bond purchase
--   Because secondsSince is calculated using lastDecay, secondsSince may not equal the time since the last debtDecay happened.
--   Elsewhere, a variable named secondsSince does use block.timestamp for calculations.
+- lastDecay in BondBaseCDA may not equal the block.timestamp, but can be greater than or less the block.timestamp when it gets updated. lastDecay is changed proportionally with the amount of the bond purchase
+- Because secondsSince is calculated using lastDecay, secondsSince may not equal the time since the last debtDecay happened.
+- Elsewhere, a variable named secondsSince does use block.timestamp for calculations.
 
 #### Proof of Concept
 
@@ -996,7 +996,7 @@ https://github.com/d-xo/weird-erc20#low-decimals
 
 The decimals requirement is applied in BondBaseCDA.sol
 
--   https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/bases/BondBaseCDA.sol#L131-L132
+- https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/bases/BondBaseCDA.sol#L131-L132
 
 #### Impact
 
@@ -1088,7 +1088,7 @@ The debtBuffer is configurable to 3 decimals (max value of 1e5), but unlike FEE_
 
 The comment
 
--   https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/bases/BondBaseCDA.sol#L233
+- https://github.com/OlympusDAO/bonds/blob/1550298fe9618e861201787cd7fc2648566cf6af/src/bases/BondBaseCDA.sol#L233
 
 #### Impact
 

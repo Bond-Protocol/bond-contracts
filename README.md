@@ -1,15 +1,17 @@
 # Bond Protocol Contracts
+
 Source code for released Bond Protocol smart contracts.
 
 [Developer Documentation](https://dev.bondprotocol.finance)
 
-Build with [foundry](https://github.com/foundry-rs/foundry): 
+Build with [foundry](https://github.com/foundry-rs/foundry):
 
 ```shell
 forge build
 ```
 
 ## Deployments
+
 The Bond system is deployed multiple chains at the same addresses:
 
 | Contract                                        | Address                                    | Ethereum                                                                                    | Arbitrum                                                                           | Optimism                                                                                                   |
