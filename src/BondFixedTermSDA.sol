@@ -16,7 +16,7 @@ import {IBondTeller} from "./interfaces/IBondTeller.sol";
 ///
 /// @dev The Fixed-Term Auctioneer is an implementation of the
 ///      Bond Base Auctioneer contract specific to creating bond markets where
-///      purchases vest in a fixed amount of time after purchased (rounded to the day).
+///      purchases vest in a fixed amount of time after purchased (rounded to the minute).
 ///
 /// @author Oighty, Zeus, Potted Meat, indigo
 contract BondFixedTermSDA is BondBaseSDA {
@@ -30,7 +30,7 @@ contract BondFixedTermSDA is BondBaseSDA {
 
     /* ========== MARKET FUNCTIONS ========== */
     /// @inheritdoc BondBaseSDA
-    function createMarket(bytes calldata params_) external override returns (uint256) {
+    function createMarket(bytes calldata params_) external payable override returns (uint256) {
         // Decode params into the struct type expected by this auctioneer
         MarketParams memory params = abi.decode(params_, (MarketParams));
 

@@ -30,7 +30,7 @@ contract BondFixedExpiryOSDA is BondBaseOSDA {
     ) BondBaseOSDA(teller_, aggregator_, guardian_, authority_) {}
 
     /// @inheritdoc BondBaseOSDA
-    function createMarket(bytes calldata params_) external override returns (uint256) {
+    function createMarket(bytes calldata params_) external payable override returns (uint256) {
         // Decode params into the struct type expected by this auctioneer
         MarketParams memory params = abi.decode(params_, (MarketParams));
 

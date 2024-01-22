@@ -10,7 +10,7 @@ interface IBondAuctioneer {
     /// @param params_          Configuration data needed for market creation, encoded in a bytes array
     /// @dev                    See specific auctioneer implementations for details on encoding the parameters.
     /// @return id              ID of new bond market
-    function createMarket(bytes memory params_) external returns (uint256);
+    function createMarket(bytes memory params_) external payable returns (uint256);
 
     /// @notice                 Disable existing bond market
     /// @notice                 Must be market owner
@@ -23,11 +23,7 @@ interface IBondAuctioneer {
     /// @param amount_          Amount to deposit in exchange for bond (after fee has been deducted)
     /// @param minAmountOut_    Minimum acceptable amount of bond to receive. Prevents frontrunning
     /// @return payout          Amount of payout token to be received from the bond
-    function purchaseBond(
-        uint256 id_,
-        uint256 amount_,
-        uint256 minAmountOut_
-    ) external returns (uint256 payout);
+    function purchaseBond(uint256 id_, uint256 amount_, uint256 minAmountOut_) external returns (uint256 payout);
 
     /// @notice                         Set market intervals to different values than the defaults
     /// @notice                         Must be market owner
@@ -88,7 +84,9 @@ interface IBondAuctioneer {
     /// @return quoteToken      Quote Token (token received) for the Market
     /// @return vesting         Timestamp or duration for vesting, implementation-dependent
     /// @return maxPayout       Maximum amount of payout tokens you can purchase in one transaction
-    function getMarketInfoForPurchase(uint256 id_)
+    function getMarketInfoForPurchase(
+        uint256 id_
+    )
         external
         view
         returns (
@@ -119,11 +117,7 @@ interface IBondAuctioneer {
     /// @param referrer_    Address of referrer, used to get fees to calculate accurate payout amount.
     ///                     Inputting the zero address will take into account just the protocol fee.
     /// @return             amount of payout tokens to be paid
-    function payoutFor(
-        uint256 amount_,
-        uint256 id_,
-        address referrer_
-    ) external view returns (uint256);
+    function payoutFor(uint256 amount_, uint256 id_, address referrer_) external view returns (uint256);
 
     /// @notice             Returns maximum amount of quote token accepted by the market
     /// @param id_          ID of market

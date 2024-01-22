@@ -4,6 +4,7 @@ pragma solidity 0.8.15;
 import {BondBaseFPA, IBondAggregator, Authority} from "./bases/BondBaseFPA.sol";
 import {IBondTeller} from "./interfaces/IBondTeller.sol";
 import {IBondFixedExpiryTeller} from "./interfaces/IBondFixedExpiryTeller.sol";
+import {IWrapper} from "./interfaces/IWrapper.sol";
 
 /// @title Bond Fixed-Expiry Fixed Price Auctioneer
 /// @notice Bond Fixed-Expiry Fixed Price Auctioneer Contract
@@ -33,11 +34,12 @@ contract BondFixedExpiryFPA is BondBaseFPA {
         IBondTeller teller_,
         IBondAggregator aggregator_,
         address guardian_,
-        Authority authority_
-    ) BondBaseFPA(teller_, aggregator_, guardian_, authority_) {}
+        Authority authority_,
+        IWrapper wrapper_
+    ) BondBaseFPA(teller_, aggregator_, guardian_, authority_, wrapper_) {}
 
     /// @inheritdoc BondBaseFPA
-    function createMarket(bytes calldata params_) external override returns (uint256) {
+    function createMarket(bytes calldata params_) external payable override returns (uint256) {
         // Decode params into the struct type expected by this auctioneer
         MarketParams memory params = abi.decode(params_, (MarketParams));
 
