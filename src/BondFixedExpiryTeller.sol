@@ -23,7 +23,7 @@ import {FullMath} from "./lib/FullMath.sol";
 /// @dev The Bond Fixed Expiry Teller is an implementation of the
 ///      Bond Base Teller contract specific to handling user bond transactions
 ///      and tokenizing bond markets where all purchases vest at the same timestamp
-///      as ERC20 tokens. Vesting timestamps are rounded to the nearest day to avoid
+///      as ERC20 tokens. Vesting timestamps are rounded to the nearest minute to avoid
 ///      duplicate tokens with the same name/symbol.
 ///
 /// @author Oighty, Zeus, Potted Meat, indigo

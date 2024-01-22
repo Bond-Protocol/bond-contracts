@@ -23,7 +23,7 @@ import {ERC1155} from "./lib/ERC1155.sol";
 /// @dev The Bond Fixed Term Teller is an implementation of the
 ///      Bond Base Teller contract specific to handling user bond transactions
 ///      and tokenizing bond markets where purchases vest in a fixed amount of time
-///      (rounded to the day) as ERC1155 tokens.
+///      (rounded to the minute) as ERC1155 tokens.
 ///
 /// @author Oighty, Zeus, Potted Meat, indigo
 contract BondFixedTermTeller is BondBaseTeller, IBondFixedTermTeller, ERC1155 {
@@ -71,7 +71,7 @@ contract BondFixedTermTeller is BondBaseTeller, IBondFixedTermTeller, ERC1155 {
         // i.e. term = 1 week. when alice deposits on day 1, her bond
         // expires on day 8. when bob deposits on day 2, his bond expires day 9.
         if (vesting_ != 0) {
-            // Normalizing fixed term vesting timestamps to the same time each day
+            // Normalizing fixed term vesting timestamps to the same time each minute
             expiry = ((vesting_ + uint48(block.timestamp)) / uint48(1 minutes)) * uint48(1 minutes);
 
             // Fixed-term user payout information is handled in BondTeller.
@@ -99,9 +99,9 @@ contract BondFixedTermTeller is BondBaseTeller, IBondFixedTermTeller, ERC1155 {
         uint48 expiry_,
         uint256 amount_
     ) external override nonReentrant returns (uint256, uint256) {
-        // Expiry is rounded to the nearest day at 0000 UTC (in seconds) since bond tokens
-        // are only unique to a day, not a specific timestamp.
-        uint48 expiry = uint48(expiry_ / 1 days) * 1 days;
+        // Expiry is rounded to the nearest minute at 0000 UTC (in seconds) since bond tokens
+        // are only unique to a minute, not a specific timestamp.
+        uint48 expiry = uint48(expiry_ / 1 minutes) * 1 minutes;
 
         // Revert if expiry is in the past
         if (expiry < block.timestamp) revert Teller_InvalidParams();
@@ -184,11 +184,11 @@ contract BondFixedTermTeller is BondBaseTeller, IBondFixedTermTeller, ERC1155 {
     /// @dev                ERC1155 tokens used for fixed term bonds
     /// @param tokenId_     Calculated ID of new bond token (from getTokenId)
     /// @param underlying_  Underlying token to be paid out when the bond token vests
-    /// @param expiry_      Timestamp that the token will vest at, will be rounded to the nearest day
+    /// @param expiry_      Timestamp that the token will vest at, will be rounded to the nearest minute
     function _deploy(uint256 tokenId_, ERC20 underlying_, uint48 expiry_) internal {
-        // Expiry is rounded to the nearest day at 0000 UTC (in seconds) since bond tokens
-        // are only unique to a day, not a specific timestamp.
-        uint48 expiry = uint48(expiry_ / 1 days) * 1 days;
+        // Expiry is rounded to the nearest minute at 0000 UTC (in seconds) since bond tokens
+        // are only unique to a minute, not a specific timestamp.
+        uint48 expiry = uint48(expiry_ / 1 minutes) * 1 minutes;
 
         // Revert if expiry is in the past
         if (uint256(expiry) < block.timestamp) revert Teller_InvalidParams();
@@ -221,9 +221,9 @@ contract BondFixedTermTeller is BondBaseTeller, IBondFixedTermTeller, ERC1155 {
 
     /// @inheritdoc IBondFixedTermTeller
     function getTokenId(ERC20 underlying_, uint48 expiry_) public pure override returns (uint256) {
-        // Expiry is divided by 1 day (in seconds) since bond tokens are only unique
-        // to a day, not a specific timestamp.
-        uint256 tokenId = uint256(keccak256(abi.encodePacked(underlying_, expiry_ / uint48(1 days))));
+        // Expiry is divided by 1 minute (in seconds) since bond tokens are only unique
+        // to a minute, not a specific timestamp.
+        uint256 tokenId = uint256(keccak256(abi.encodePacked(underlying_, expiry_ / uint48(1 minutes))));
         return tokenId;
     }
 
