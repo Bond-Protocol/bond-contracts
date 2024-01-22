@@ -42,7 +42,7 @@ contract BondFixedTermFPA is BondBaseFPA {
         MarketParams memory params = abi.decode(params_, (MarketParams));
 
         // Check that the vesting parameter is valid for a fixed-term market
-        if (params.vesting != 0 && (params.vesting < 1 days || params.vesting > MAX_FIXED_TERM))
+        if (params.vesting != 0 && (params.vesting < 1 minutes || params.vesting > MAX_FIXED_TERM))
             revert Auctioneer_InvalidParams();
 
         // Create market and return market ID

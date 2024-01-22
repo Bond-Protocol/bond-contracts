@@ -42,9 +42,9 @@ contract BondFixedExpiryOFDA is BondBaseOFDA {
         // Decode params into the struct type expected by this auctioneer
         MarketParams memory params = abi.decode(params_, (MarketParams));
 
-        // Vesting is rounded to the nearest day at 0000 UTC (in seconds) since bond tokens
-        // are only unique to a day, not a specific timestamp.
-        params.vesting = (params.vesting / 1 days) * 1 days;
+        // Vesting is rounded to the nearest minute at 0000 UTC (in seconds) since bond tokens
+        // are only unique to a minute, not a specific timestamp.
+        params.vesting = (params.vesting / 1 minutes) * 1 minutes;
 
         // Get conclusion from start time and duration
         // Don't need to check valid start time or duration here since it will be checked in _createMarket
@@ -58,8 +58,7 @@ contract BondFixedExpiryOFDA is BondBaseOFDA {
         uint256 marketId = _createMarket(params);
 
         // Create bond token (ERC20 for fixed expiry) if not instant swap
-        if (params.vesting != 0)
-            IBondFixedExpiryTeller(address(_teller)).deploy(params.payoutToken, params.vesting);
+        if (params.vesting != 0) IBondFixedExpiryTeller(address(_teller)).deploy(params.payoutToken, params.vesting);
 
         // Return market ID
         return marketId;

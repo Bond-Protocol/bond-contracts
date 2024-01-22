@@ -72,7 +72,7 @@ contract BondFixedTermTeller is BondBaseTeller, IBondFixedTermTeller, ERC1155 {
         // expires on day 8. when bob deposits on day 2, his bond expires day 9.
         if (vesting_ != 0) {
             // Normalizing fixed term vesting timestamps to the same time each day
-            expiry = ((vesting_ + uint48(block.timestamp)) / uint48(1 days)) * uint48(1 days);
+            expiry = ((vesting_ + uint48(block.timestamp)) / uint48(1 minutes)) * uint48(1 minutes);
 
             // Fixed-term user payout information is handled in BondTeller.
             // Teller mints ERC-1155 bond tokens for user.
@@ -116,8 +116,7 @@ contract BondFixedTermTeller is BondBaseTeller, IBondFixedTermTeller, ERC1155 {
         // Handles edge cases like fee-on-transfer tokens (which are not supported)
         uint256 oldBalance = underlying_.balanceOf(address(this));
         underlying_.safeTransferFrom(msg.sender, address(this), amount_);
-        if (underlying_.balanceOf(address(this)) < oldBalance + amount_)
-            revert Teller_UnsupportedToken();
+        if (underlying_.balanceOf(address(this)) < oldBalance + amount_) revert Teller_UnsupportedToken();
 
         // If fee is greater than the create discount, then calculate the fee and store it
         // Otherwise, fee is zero.
@@ -161,11 +160,7 @@ contract BondFixedTermTeller is BondBaseTeller, IBondFixedTermTeller, ERC1155 {
     }
 
     /// @inheritdoc IBondFixedTermTeller
-    function batchRedeem(uint256[] calldata tokenIds_, uint256[] calldata amounts_)
-        external
-        override
-        nonReentrant
-    {
+    function batchRedeem(uint256[] calldata tokenIds_, uint256[] calldata amounts_) external override nonReentrant {
         uint256 len = tokenIds_.length;
         if (len != amounts_.length) revert Teller_InvalidParams();
         for (uint256 i; i < len; ++i) {
@@ -176,12 +171,7 @@ contract BondFixedTermTeller is BondBaseTeller, IBondFixedTermTeller, ERC1155 {
     /* ========== TOKENIZATION ========== */
 
     /// @inheritdoc IBondFixedTermTeller
-    function deploy(ERC20 underlying_, uint48 expiry_)
-        external
-        override
-        nonReentrant
-        returns (uint256)
-    {
+    function deploy(ERC20 underlying_, uint48 expiry_) external override nonReentrant returns (uint256) {
         uint256 tokenId = getTokenId(underlying_, expiry_);
         // Only creates token if it does not exist
         if (!tokenMetadata[tokenId].active) {
@@ -195,11 +185,7 @@ contract BondFixedTermTeller is BondBaseTeller, IBondFixedTermTeller, ERC1155 {
     /// @param tokenId_     Calculated ID of new bond token (from getTokenId)
     /// @param underlying_  Underlying token to be paid out when the bond token vests
     /// @param expiry_      Timestamp that the token will vest at, will be rounded to the nearest day
-    function _deploy(
-        uint256 tokenId_,
-        ERC20 underlying_,
-        uint48 expiry_
-    ) internal {
+    function _deploy(uint256 tokenId_, ERC20 underlying_, uint48 expiry_) internal {
         // Expiry is rounded to the nearest day at 0000 UTC (in seconds) since bond tokens
         // are only unique to a day, not a specific timestamp.
         uint48 expiry = uint48(expiry_ / 1 days) * 1 days;
@@ -208,13 +194,7 @@ contract BondFixedTermTeller is BondBaseTeller, IBondFixedTermTeller, ERC1155 {
         if (uint256(expiry) < block.timestamp) revert Teller_InvalidParams();
 
         // Store token metadata
-        tokenMetadata[tokenId_] = TokenMetadata(
-            true,
-            underlying_,
-            uint8(underlying_.decimals()),
-            expiry,
-            0
-        );
+        tokenMetadata[tokenId_] = TokenMetadata(true, underlying_, uint8(underlying_.decimals()), expiry, 0);
 
         emit ERC1155BondTokenCreated(tokenId_, underlying_, expiry);
     }
@@ -223,11 +203,7 @@ contract BondFixedTermTeller is BondBaseTeller, IBondFixedTermTeller, ERC1155 {
     /// @param to_          Address to mint tokens to
     /// @param tokenId_     ID of bond token to mint
     /// @param amount_      Amount of bond tokens to mint
-    function _mintToken(
-        address to_,
-        uint256 tokenId_,
-        uint256 amount_
-    ) internal {
+    function _mintToken(address to_, uint256 tokenId_, uint256 amount_) internal {
         tokenMetadata[tokenId_].supply += amount_;
         _mint(to_, tokenId_, amount_, bytes(""));
     }
@@ -236,11 +212,7 @@ contract BondFixedTermTeller is BondBaseTeller, IBondFixedTermTeller, ERC1155 {
     /// @param from_        Address to burn tokens from
     /// @param tokenId_     ID of bond token to burn
     /// @param amount_      Amount of bond token to burn
-    function _burnToken(
-        address from_,
-        uint256 tokenId_,
-        uint256 amount_
-    ) internal {
+    function _burnToken(address from_, uint256 tokenId_, uint256 amount_) internal {
         tokenMetadata[tokenId_].supply -= amount_;
         _burn(from_, tokenId_, amount_);
     }
@@ -251,24 +223,14 @@ contract BondFixedTermTeller is BondBaseTeller, IBondFixedTermTeller, ERC1155 {
     function getTokenId(ERC20 underlying_, uint48 expiry_) public pure override returns (uint256) {
         // Expiry is divided by 1 day (in seconds) since bond tokens are only unique
         // to a day, not a specific timestamp.
-        uint256 tokenId = uint256(
-            keccak256(abi.encodePacked(underlying_, expiry_ / uint48(1 days)))
-        );
+        uint256 tokenId = uint256(keccak256(abi.encodePacked(underlying_, expiry_ / uint48(1 days))));
         return tokenId;
     }
 
     /// @inheritdoc IBondFixedTermTeller
-    function getTokenNameAndSymbol(uint256 tokenId_)
-        external
-        view
-        override
-        returns (string memory, string memory)
-    {
+    function getTokenNameAndSymbol(uint256 tokenId_) external view override returns (string memory, string memory) {
         TokenMetadata memory meta = tokenMetadata[tokenId_];
-        (string memory name, string memory symbol) = _getNameAndSymbol(
-            meta.underlying,
-            meta.expiry
-        );
+        (string memory name, string memory symbol) = _getNameAndSymbol(meta.underlying, meta.expiry);
         return (name, symbol);
     }
 }
