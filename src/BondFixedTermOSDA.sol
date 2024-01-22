@@ -3,6 +3,7 @@ pragma solidity ^0.8.15;
 
 import {BondBaseOSDA, IBondAggregator, Authority} from "./bases/BondBaseOSDA.sol";
 import {IBondTeller} from "./interfaces/IBondTeller.sol";
+import {IWrapper} from "./interfaces/IWrapper.sol";
 
 /// @title Bond Fixed-Term Oracle-based Sequential Dutch Auctioneer
 /// @notice Bond Fixed-Term Oracle-based Sequential Dutch Auctioneer Contract
@@ -25,8 +26,9 @@ contract BondFixedTermOSDA is BondBaseOSDA {
         IBondTeller teller_,
         IBondAggregator aggregator_,
         address guardian_,
-        Authority authority_
-    ) BondBaseOSDA(teller_, aggregator_, guardian_, authority_) {}
+        Authority authority_,
+        IWrapper wrapper_
+    ) BondBaseOSDA(teller_, aggregator_, guardian_, authority_, wrapper_) {}
 
     /* ========== MARKET FUNCTIONS ========== */
     /// @inheritdoc BondBaseOSDA

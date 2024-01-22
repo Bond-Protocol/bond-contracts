@@ -5,6 +5,7 @@ import {ERC20} from "solmate/src/tokens/ERC20.sol";
 
 import {BondBaseTeller, IBondAggregator, Authority} from "./bases/BondBaseTeller.sol";
 import {IBondFixedTermTeller} from "./interfaces/IBondFixedTermTeller.sol";
+import {IWrapper} from "./interfaces/IWrapper.sol";
 
 import {TransferHelper} from "./lib/TransferHelper.sol";
 import {FullMath} from "./lib/FullMath.sol";
@@ -42,8 +43,9 @@ contract BondFixedTermTeller is BondBaseTeller, IBondFixedTermTeller, ERC1155 {
         address protocol_,
         IBondAggregator aggregator_,
         address guardian_,
-        Authority authority_
-    ) BondBaseTeller(protocol_, aggregator_, guardian_, authority_) {}
+        Authority authority_,
+        IWrapper wrapper_
+    ) BondBaseTeller(protocol_, aggregator_, guardian_, authority_, wrapper_) {}
 
     /* ========== PURCHASE ========== */
 
@@ -87,7 +89,15 @@ contract BondFixedTermTeller is BondBaseTeller, IBondFixedTermTeller, ERC1155 {
             _mintToken(recipient_, tokenId, payout_);
         } else {
             // If no expiry, then transfer payout directly to user
-            payoutToken_.safeTransfer(recipient_, payout_);
+
+            // If payout token is wrapped, convert it to native and transfer
+            if (address(payoutToken_) == address(_wrapper)) {
+                _wrapper.withdraw(payout_);
+                bool sent = payable(msg.sender).send(payout_);
+                require(sent, "Failed to send native tokens");
+            } else {
+                payoutToken_.safeTransfer(recipient_, payout_);
+            }
         }
     }
 
@@ -151,7 +161,15 @@ contract BondFixedTermTeller is BondBaseTeller, IBondFixedTermTeller, ERC1155 {
 
         // Burn bond token and transfer underlying to sender
         _burnToken(msg.sender, tokenId_, amount_);
-        meta.underlying.safeTransfer(msg.sender, amount_);
+
+        // If payout token is wrapped, convert it to native and transfer
+        if (address(meta.underlying) == address(_wrapper)) {
+            _wrapper.withdraw(amount_);
+            bool sent = payable(msg.sender).send(amount_);
+            require(sent, "Failed to send native tokens");
+        } else {
+            meta.underlying.safeTransfer(msg.sender, amount_);
+        }
     }
 
     /// @inheritdoc IBondFixedTermTeller

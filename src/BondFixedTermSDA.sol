@@ -3,6 +3,7 @@ pragma solidity 0.8.15;
 
 import {BondBaseSDA, IBondAggregator, Authority} from "./bases/BondBaseSDA.sol";
 import {IBondTeller} from "./interfaces/IBondTeller.sol";
+import {IWrapper} from "./interfaces/IWrapper.sol";
 
 /// @title Bond Fixed-Term Sequential Dutch Auctioneer
 /// @notice Bond Fixed-Term Sequential Dutch Auctioneer Contract
@@ -25,8 +26,9 @@ contract BondFixedTermSDA is BondBaseSDA {
         IBondTeller teller_,
         IBondAggregator aggregator_,
         address guardian_,
-        Authority authority_
-    ) BondBaseSDA(teller_, aggregator_, guardian_, authority_) {}
+        Authority authority_,
+        IWrapper wrapper_
+    ) BondBaseSDA(teller_, aggregator_, guardian_, authority_, wrapper_) {}
 
     /* ========== MARKET FUNCTIONS ========== */
     /// @inheritdoc BondBaseSDA

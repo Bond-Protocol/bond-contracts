@@ -6,6 +6,7 @@ import {ClonesWithImmutableArgs} from "clones-with-immutable-args/ClonesWithImmu
 
 import {BondBaseTeller, IBondAggregator, Authority} from "./bases/BondBaseTeller.sol";
 import {IBondFixedExpiryTeller} from "./interfaces/IBondFixedExpiryTeller.sol";
+import {IWrapper} from "./interfaces/IWrapper.sol";
 import {ERC20BondToken} from "./ERC20BondToken.sol";
 
 import {TransferHelper} from "./lib/TransferHelper.sol";
@@ -47,8 +48,9 @@ contract BondFixedExpiryTeller is BondBaseTeller, IBondFixedExpiryTeller {
         address protocol_,
         IBondAggregator aggregator_,
         address guardian_,
-        Authority authority_
-    ) BondBaseTeller(protocol_, aggregator_, guardian_, authority_) {
+        Authority authority_,
+        IWrapper wrapper_
+    ) BondBaseTeller(protocol_, aggregator_, guardian_, authority_, wrapper_) {
         bondTokenImplementation = new ERC20BondToken();
     }
 
@@ -57,13 +59,13 @@ contract BondFixedExpiryTeller is BondBaseTeller, IBondFixedExpiryTeller {
     /// @notice             Handle payout to recipient
     /// @param recipient_   Address to receive payout
     /// @param payout_      Amount of payoutToken to be paid
-    /// @param underlying_   Token to be paid out
+    /// @param payoutToken_   Token to be paid out
     /// @param vesting_     Timestamp when the payout will vest
     /// @return expiry      Timestamp when the payout will vest
     function _handlePayout(
         address recipient_,
         uint256 payout_,
-        ERC20 underlying_,
+        ERC20 payoutToken_,
         uint48 vesting_
     ) internal override returns (uint48 expiry) {
         // If there is no vesting time, the deposit is treated as an instant swap.
@@ -80,10 +82,18 @@ contract BondFixedExpiryTeller is BondBaseTeller, IBondFixedExpiryTeller {
         if (vesting_ > uint48(block.timestamp)) {
             expiry = vesting_;
             // Fixed-expiry bonds mint ERC-20 tokens
-            bondTokens[underlying_][expiry].mint(recipient_, payout_);
+            bondTokens[payoutToken_][expiry].mint(recipient_, payout_);
         } else {
             // If no expiry, then transfer payout directly to user
-            underlying_.safeTransfer(recipient_, payout_);
+
+            // If payout token is wrapped, convert it to native and transfer
+            if (address(payoutToken_) == address(_wrapper)) {
+                _wrapper.withdraw(payout_);
+                bool sent = payable(msg.sender).send(payout_);
+                require(sent, "Failed to send native tokens");
+            } else {
+                payoutToken_.safeTransfer(recipient_, payout_);
+            }
         }
     }
 
@@ -148,7 +158,15 @@ contract BondFixedExpiryTeller is BondBaseTeller, IBondFixedExpiryTeller {
 
         // Burn bond token and transfer underlying
         token_.burn(msg.sender, amount_);
-        underlying.safeTransfer(msg.sender, amount_);
+
+        // If payout token is wrapped, convert it to native and transfer
+        if (address(underlying) == address(_wrapper)) {
+            _wrapper.withdraw(amount_);
+            bool sent = payable(msg.sender).send(amount_);
+            require(sent, "Failed to send native tokens");
+        } else {
+            underlying.safeTransfer(msg.sender, amount_);
+        }
     }
 
     /* ========== TOKENIZATION ========== */

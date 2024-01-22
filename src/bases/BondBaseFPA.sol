@@ -122,21 +122,15 @@ abstract contract BondBaseFPA is IBondFPA, Auth {
 
     /// @notice core market creation logic, see IBondFPA.MarketParams documentation
     function _createMarket(MarketParams memory params_) internal returns (uint256) {
+        bool isPayoutTokenNative = false;
+        if (params_.payoutToken == ERC20(address(0))) {
+            isPayoutTokenNative = true;
+            params_.payoutToken = ERC20(address(_wrapper));
+        }
+
         {
             // Check that the auctioneer is allowing new markets to be created
             if (!allowNewMarkets) revert Auctioneer_NewMarketsNotAllowed();
-
-            // Convert native payout token to wrapped token
-            if (params_.payoutToken == ERC20(address(0))) {
-                // If capacity is in quote tokens, cannot safely convert to wrapped token
-                if (params_.capacityInQuote) revert Auctioneer_InvalidParams();
-
-                // Ensure capacity is equal to the value sent
-                if (params_.capacity != msg.value) revert Auctioneer_InvalidParams();
-
-                _wrapper.deposit{value: msg.value}();
-                params_.payoutToken = ERC20(address(_wrapper));
-            }
 
             // Ensure params are in bounds
             uint8 payoutTokenDecimals = params_.payoutToken.decimals();
@@ -173,10 +167,24 @@ abstract contract BondBaseFPA is IBondFPA, Auth {
             params_.depositInterval > params_.duration
         ) revert Auctioneer_InvalidParams();
 
+        // Convert capacity to payout token units
+        uint256 capacityInPayout = params_.capacityInQuote
+            ? params_.capacity.mulDiv(scale, params_.formattedPrice)
+            : params_.capacity;
+
+        // Wrap native tokens
+        if (isPayoutTokenNative) {
+            // Ensure capacity is equal to the value sent
+            if (capacityInPayout != msg.value) revert Auctioneer_InvalidParams();
+
+            // Wrap native tokens
+            _wrapper.deposit{value: msg.value}();
+            // Transfer tokens back to user
+            params_.payoutToken.safeTransfer(msg.sender, msg.value);
+        }
+
         // Calculate the maximum payout amount for this market
-        uint256 _maxPayout = (
-            params_.capacityInQuote ? params_.capacity.mulDiv(scale, params_.formattedPrice) : params_.capacity
-        ).mulDiv(uint256(params_.depositInterval), uint256(params_.duration));
+        uint256 _maxPayout = capacityInPayout.mulDiv(uint256(params_.depositInterval), uint256(params_.duration));
 
         // Register new market on aggregator and get marketId
         uint256 marketId = _aggregator.registerMarket(params_.payoutToken, params_.quoteToken);

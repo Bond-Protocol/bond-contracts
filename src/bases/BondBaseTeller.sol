@@ -9,6 +9,7 @@ import {IBondTeller} from "../interfaces/IBondTeller.sol";
 import {IBondCallback} from "../interfaces/IBondCallback.sol";
 import {IBondAggregator} from "../interfaces/IBondAggregator.sol";
 import {IBondAuctioneer} from "../interfaces/IBondAuctioneer.sol";
+import {IWrapper} from "../interfaces/IWrapper.sol";
 
 import {TransferHelper} from "../lib/TransferHelper.sol";
 import {FullMath} from "../lib/FullMath.sol";
@@ -72,14 +73,19 @@ abstract contract BondBaseTeller is IBondTeller, Auth, ReentrancyGuard {
     // BondAggregator contract with utility functions
     IBondAggregator internal immutable _aggregator;
 
+    // Wrapper contract that handles deposits and withdrawals in native tokens
+    IWrapper internal immutable _wrapper;
+
     constructor(
         address protocol_,
         IBondAggregator aggregator_,
         address guardian_,
-        Authority authority_
+        Authority authority_,
+        IWrapper wrapper_
     ) Auth(guardian_, authority_) {
         _protocol = protocol_;
         _aggregator = aggregator_;
+        _wrapper = wrapper_;
 
         // Explicitly setting these values to zero to document
         protocolFee = 0;
@@ -143,15 +149,12 @@ abstract contract BondBaseTeller is IBondTeller, Auth, ReentrancyGuard {
         // 2. Calculate protocol fee as the total expected fee amount minus the referrer fee
         //    to avoid issues with rounding from separate fee calculations
         uint256 toReferrer = amount_.mulDiv(referrerFees[referrer_], FEE_DECIMALS);
-        uint256 toProtocol = amount_.mulDiv(protocolFee + referrerFees[referrer_], FEE_DECIMALS) -
-            toReferrer;
+        uint256 toProtocol = amount_.mulDiv(protocolFee + referrerFees[referrer_], FEE_DECIMALS) - toReferrer;
 
         {
             IBondAuctioneer auctioneer = _aggregator.getAuctioneer(id_);
             address owner;
-            (owner, , payoutToken, quoteToken, vesting, ) = auctioneer.getMarketInfoForPurchase(
-                id_
-            );
+            (owner, , payoutToken, quoteToken, vesting, ) = auctioneer.getMarketInfoForPurchase(id_);
 
             // Auctioneer handles bond pricing, capacity, and duration
             uint256 amountLessFee = amount_ - toReferrer - toProtocol;
@@ -174,12 +177,7 @@ abstract contract BondBaseTeller is IBondTeller, Auth, ReentrancyGuard {
     }
 
     /// @notice     Handles transfer of funds from user and market owner/callback
-    function _handleTransfers(
-        uint256 id_,
-        uint256 amount_,
-        uint256 payout_,
-        uint256 feePaid_
-    ) internal {
+    function _handleTransfers(uint256 id_, uint256 amount_, uint256 payout_, uint256 feePaid_) internal {
         // Get info from auctioneer
         (address owner, address callbackAddr, ERC20 payoutToken, ERC20 quoteToken, , ) = _aggregator
             .getAuctioneer(id_)
@@ -193,8 +191,7 @@ abstract contract BondBaseTeller is IBondTeller, Auth, ReentrancyGuard {
         // Handles edge cases like fee-on-transfer tokens (which are not supported)
         uint256 quoteBalance = quoteToken.balanceOf(address(this));
         quoteToken.safeTransferFrom(msg.sender, address(this), amount_);
-        if (quoteToken.balanceOf(address(this)) < quoteBalance + amount_)
-            revert Teller_UnsupportedToken();
+        if (quoteToken.balanceOf(address(this)) < quoteBalance + amount_) revert Teller_UnsupportedToken();
 
         // If callback address supplied, transfer tokens from teller to callback, then execute callback function,
         // and ensure proper amount of tokens transferred in.
@@ -207,8 +204,7 @@ abstract contract BondBaseTeller is IBondTeller, Auth, ReentrancyGuard {
             IBondCallback(callbackAddr).callback(id_, amountLessFee, payout_);
 
             // Check to ensure that the callback sent the requested amount of payout tokens back to the teller
-            if (payoutToken.balanceOf(address(this)) < (payoutBalance + payout_))
-                revert Teller_InvalidCallback();
+            if (payoutToken.balanceOf(address(this)) < (payoutBalance + payout_)) revert Teller_InvalidCallback();
         } else {
             // If no callback is provided, transfer tokens from market owner to this contract
             // for payout.
@@ -216,8 +212,7 @@ abstract contract BondBaseTeller is IBondTeller, Auth, ReentrancyGuard {
             // Handles edge cases like fee-on-transfer tokens (which are not supported)
             uint256 payoutBalance = payoutToken.balanceOf(address(this));
             payoutToken.safeTransferFrom(owner, address(this), payout_);
-            if (payoutToken.balanceOf(address(this)) < (payoutBalance + payout_))
-                revert Teller_UnsupportedToken();
+            if (payoutToken.balanceOf(address(this)) < (payoutBalance + payout_)) revert Teller_UnsupportedToken();
 
             quoteToken.safeTransfer(owner, amountLessFee);
         }
@@ -244,11 +239,10 @@ abstract contract BondBaseTeller is IBondTeller, Auth, ReentrancyGuard {
     /// @param expiry_      Timestamp that the Bond Token vests at
     /// @return name        Bond token name, format is "Token YYYY-MM-DD"
     /// @return symbol      Bond token symbol, format is "TKN-YYYYMMDD"
-    function _getNameAndSymbol(ERC20 underlying_, uint256 expiry_)
-        internal
-        view
-        returns (string memory name, string memory symbol)
-    {
+    function _getNameAndSymbol(
+        ERC20 underlying_,
+        uint256 expiry_
+    ) internal view returns (string memory name, string memory symbol) {
         // Convert a number of days into a human-readable date, courtesy of BokkyPooBah.
         // Source: https://github.com/bokkypoobah/BokkyPooBahsDateTimeLibrary/blob/master/contracts/BokkyPooBahsDateTimeLibrary.sol
 
@@ -275,17 +269,11 @@ abstract contract BondBaseTeller is IBondTeller, Auth, ReentrancyGuard {
         }
 
         string memory yearStr = _uint2str(year % 10000);
-        string memory monthStr = month < 10
-            ? string(abi.encodePacked("0", _uint2str(month)))
-            : _uint2str(month);
-        string memory dayStr = day < 10
-            ? string(abi.encodePacked("0", _uint2str(day)))
-            : _uint2str(day);
+        string memory monthStr = month < 10 ? string(abi.encodePacked("0", _uint2str(month))) : _uint2str(month);
+        string memory dayStr = day < 10 ? string(abi.encodePacked("0", _uint2str(day))) : _uint2str(day);
 
         // Construct name/symbol strings.
-        name = string(
-            abi.encodePacked(underlying_.name(), " ", yearStr, "-", monthStr, "-", dayStr)
-        );
+        name = string(abi.encodePacked(underlying_.name(), " ", yearStr, "-", monthStr, "-", dayStr));
         symbol = string(abi.encodePacked(underlying_.symbol(), "-", yearStr, monthStr, dayStr));
     }
 

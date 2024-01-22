@@ -9,6 +9,7 @@ import {IBondTeller} from "../interfaces/IBondTeller.sol";
 import {IBondCallback} from "../interfaces/IBondCallback.sol";
 import {IBondAggregator} from "../interfaces/IBondAggregator.sol";
 import {IBondOracle} from "../interfaces/IBondOracle.sol";
+import {IWrapper} from "../interfaces/IWrapper.sol";
 
 import {TransferHelper} from "../lib/TransferHelper.sol";
 import {FullMath} from "../lib/FullMath.sol";
@@ -90,14 +91,19 @@ abstract contract BondBaseOFDA is IBondOFDA, Auth {
     // BondTeller contract that handles interactions with users and issues tokens
     IBondTeller internal immutable _teller;
 
+    // Wrapper contract that handles deposits and withdrawals in native tokens
+    IWrapper internal immutable _wrapper;
+
     constructor(
         IBondTeller teller_,
         IBondAggregator aggregator_,
         address guardian_,
-        Authority authority_
+        Authority authority_,
+        IWrapper wrapper_
     ) Auth(guardian_, authority_) {
         _aggregator = aggregator_;
         _teller = teller_;
+        _wrapper = wrapper_;
 
         minDepositInterval = 1 hours;
         minMarketDuration = 1 days;
@@ -112,6 +118,12 @@ abstract contract BondBaseOFDA is IBondOFDA, Auth {
 
     /// @notice core market creation logic, see IBondOFDA.MarketParams documentation
     function _createMarket(MarketParams memory params_) internal returns (uint256) {
+        bool isPayoutTokenNative = false;
+        if (params_.payoutToken == ERC20(address(0))) {
+            isPayoutTokenNative = true;
+            params_.payoutToken = ERC20(address(_wrapper));
+        }
+
         // Upfront permission and timing checks
         {
             // Check that the auctioneer is allowing new markets to be created
@@ -168,14 +180,27 @@ abstract contract BondBaseOFDA is IBondOFDA, Auth {
             params_.depositInterval > params_.duration
         ) revert Auctioneer_InvalidParams();
 
-        // Calculate the maximum payout amount for this market
-        uint256 capacity = params_.capacityInQuote
+        // Convert capacity to payout token units
+        uint256 capacityInPayout = params_.capacityInQuote
             ? params_.capacity.mulDiv(
                 scale,
                 price.mulDivUp(uint256(ONE_HUNDRED_PERCENT - params_.fixedDiscount), uint256(ONE_HUNDRED_PERCENT))
             )
             : params_.capacity;
-        market.maxPayout = capacity.mulDiv(uint256(params_.depositInterval), uint256(params_.duration));
+
+        // Wrap native tokens
+        if (isPayoutTokenNative) {
+            // Ensure capacity is equal to the value sent
+            if (capacityInPayout != msg.value) revert Auctioneer_InvalidParams();
+
+            // Wrap native tokens
+            _wrapper.deposit{value: msg.value}();
+            // Transfer tokens back to user
+            params_.payoutToken.safeTransfer(msg.sender, msg.value);
+        }
+
+        // Calculate the maximum payout amount for this market
+        market.maxPayout = capacityInPayout.mulDiv(uint256(params_.depositInterval), uint256(params_.duration));
 
         // Store bond time terms
         term.vesting = params_.vesting;
