@@ -89,7 +89,7 @@ contract BondFixedExpiryTeller is BondBaseTeller, IBondFixedExpiryTeller {
             // If payout token is wrapped, convert it to native and transfer
             if (address(payoutToken_) == address(_wrapper)) {
                 _wrapper.withdraw(payout_);
-                bool sent = payable(msg.sender).send(payout_);
+                bool sent = payable(recipient_).send(payout_);
                 require(sent, "Failed to send native tokens");
             } else {
                 payoutToken_.safeTransfer(recipient_, payout_);

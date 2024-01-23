@@ -218,6 +218,8 @@ abstract contract BondBaseTeller is IBondTeller, Auth, ReentrancyGuard {
         }
     }
 
+    receive() external payable {} // need to receive native token from wrapper contract
+
     /// @notice             Handle payout to recipient
     /// @dev                Implementation-agnostic. Must be implemented in contracts that
     ///                     extend this base since it is called by purchase.

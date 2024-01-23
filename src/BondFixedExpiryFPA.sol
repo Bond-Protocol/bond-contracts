@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.8.15;
 
+import {ERC20} from "solmate/src/tokens/ERC20.sol";
 import {BondBaseFPA, IBondAggregator, Authority} from "./bases/BondBaseFPA.sol";
 import {IBondTeller} from "./interfaces/IBondTeller.sol";
 import {IBondFixedExpiryTeller} from "./interfaces/IBondFixedExpiryTeller.sol";
@@ -59,7 +60,11 @@ contract BondFixedExpiryFPA is BondBaseFPA {
         uint256 marketId = _createMarket(params);
 
         // Create bond token (ERC20 for fixed expiry) if not instant swap
-        if (params.vesting != 0) IBondFixedExpiryTeller(address(_teller)).deploy(params.payoutToken, params.vesting);
+        if (params.vesting != 0)
+            IBondFixedExpiryTeller(address(_teller)).deploy(
+                address(params.payoutToken) == address(0) ? ERC20(address(_wrapper)) : params.payoutToken,
+                params.vesting
+            );
 
         // Return market ID
         return marketId;
